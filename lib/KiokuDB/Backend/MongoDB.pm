@@ -8,6 +8,7 @@ use namespace::clean -except => 'meta';
 with qw/
     KiokuDB::Backend
     KiokuDB::Backend::Serialize::MongoDB
+    KiokuDB::Backend::Role::Clear
 /;
 
 has [qw/database_name collection_name/] => (
@@ -75,6 +76,11 @@ sub delete {
         $self->collection->remove({ kiokuid => $id });
     }
     return;
+}
+
+sub clear {
+    my ($self) = @_;
+    $self->collection->drop;
 }
 
 __PACKAGE__->meta->make_immutable;
