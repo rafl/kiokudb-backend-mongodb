@@ -2,6 +2,7 @@ package KiokuDB::Backend::MongoDB;
 
 use Moose;
 use MongoDB;
+use Data::Stream::Bulk::Callback;
 
 use namespace::clean -except => 'meta';
 
@@ -9,6 +10,7 @@ with qw/
     KiokuDB::Backend
     KiokuDB::Backend::Serialize::MongoDB
     KiokuDB::Backend::Role::Clear
+    KiokuDB::Backend::Role::Scan
 /;
 
 has [qw/database_name collection_name/] => (
@@ -81,6 +83,17 @@ sub delete {
 sub clear {
     my ($self) = @_;
     $self->collection->drop;
+}
+
+sub all_entries {
+    my ($self) = @_;
+    my $cursor = $self->collection->query({});
+    return Data::Stream::Bulk::Callback->new(sub {
+        if (my $obj = $cursor->next) {
+            return [$obj];
+        }
+        return;
+    });
 }
 
 __PACKAGE__->meta->make_immutable;
