@@ -11,6 +11,7 @@ with qw/
     KiokuDB::Backend::Serialize::MongoDB
     KiokuDB::Backend::Role::Clear
     KiokuDB::Backend::Role::Scan
+    KiokuDB::Backend::Role::Query::Simple
 /;
 
 has [qw/database_name collection_name/] => (
@@ -88,6 +89,17 @@ sub clear {
 sub all_entries {
     my ($self) = @_;
     my $cursor = $self->collection->query({});
+    return Data::Stream::Bulk::Callback->new(sub {
+        if (my $obj = $cursor->next) {
+            return [$obj];
+        }
+        return;
+    });
+}
+
+sub simple_search {
+    my ($self, $proto) = @_;
+    my $cursor = $self->collection->query($proto);
     return Data::Stream::Bulk::Callback->new(sub {
         if (my $obj = $cursor->next) {
             return [$obj];
